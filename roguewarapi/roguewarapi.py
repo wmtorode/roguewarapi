@@ -2,8 +2,9 @@ import requests
 import logging
 import traceback
 import json
+import time
 
-from .data import StarMap, StarSystem, CacheManager
+from .data import StarMap, StarSystem, CacheManager, StarSystemConst, StarMapConstants
 
 class RogueWarApi:
     """
@@ -47,6 +48,7 @@ class RogueWarApi:
             self.Logger.addHandler(loggerhandler)
         self.lastResult = None  # type: dict
         self.cache = CacheManager()
+        self.starMapConstants = None # type: StarMapConstants
 
 
     def _getHeaders(self, cHeaders):
@@ -149,3 +151,22 @@ class RogueWarApi:
             self.cache.placeCacheItem(self._kStarMapCacheKey, starmap)
             return starmap
         return None
+
+    def getSystemConstants(self, bForce=False):
+        """
+        retrieve constants about the starmap, this includes data like system positions, and original owner
+
+        :param bForce: force the data to be refreshed from the server, this generally shouldnt be needed
+        :type bForce: bool
+        :return: a `StarMapConstants` object
+        :rtype: StarMapConstants
+        """
+        if bForce or self.starMapConstants is None:
+            if self._sendGetRequest('getsystemstatic'):
+                constants = StarMapConstants()
+                constants.fromJson(self.lastResult)
+                stTime = time.time()
+                constants.mapAdjacents(50)
+                self.starMapConstants = constants
+                self.Logger.info(f"Adjacency Mapping took: {time.time() - stTime:0.02f} seconds")
+        return self.starMapConstants

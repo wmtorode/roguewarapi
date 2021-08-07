@@ -21,3 +21,10 @@ class StarMap(BaseDataObject):
         :rtype: list[StarSystem]
         """
         return self._systems
+
+    def findSystemsByOwner(self, owner):
+        systs = []
+        for system in self._systems:
+            if system.owner == owner:
+                systs.append(system)
+        return systs
